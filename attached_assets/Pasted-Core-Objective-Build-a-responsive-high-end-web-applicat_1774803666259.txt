@@ -1,0 +1,62 @@
+Core Objective:
+Build a responsive, high-end web application for managing multiple business ledgers (Cashbooks). The app should allow me to track "Cash In" (Credit) and "Cash Out" (Debit) for different clients or entities, calculate real-time balances, and generate professional PDF reports.
+
+1. Visual Style & UI (Modern/Aesthetic):
+
+Theme: Use a "Linear" or "Apple" style aesthetic. Clean white backgrounds, subtle soft-gray borders, and plenty of whitespace.
+
+Typography: Use a modern sans-serif font (inter or Geist).
+
+Color Palette: * Success (Cash In): Emerald Green (not neon).
+
+Danger (Cash Out): Rose Red.
+
+Primary Accent: Indigo or Deep Charcoal.
+
+Components: Use Shadcn/UI or Tailwind CSS for sleek cards, glassmorphism effects on modals, and smooth micro-interactions/animations.
+
+2. Key Features:
+
+Multi-Cashbook Management: A sidebar or dropdown to switch between different "Cash Books" (e.g., Leelu fauji, Khal wala, etc.).
+
+Transaction Logging:
+
+Cash In / Cash Out buttons: Floating or prominent at the bottom of the screen.
+
+Input Fields: Date picker (default to today), Amount, and a "Particular/Remark" text field.
+
+Ledger View: * A chronological list of transactions.
+
+Columns for: Date, Particulars, Amount (colored by type), and Running Balance.
+
+Sticky header showing the "Total Net Balance" in a large, bold font.
+
+Data Persistence: Use a database (PostgreSQL via Prisma or Replit's Object Storage) so data is saved permanently.
+
+PDF Generation: A "Generate Report" button that creates a clean, branded PDF of the current ledger with a summary header.
+
+3. Functional Logic:
+
+Real-time Math: Automatically update the running balance as transactions are added.
+
+Group by Date: Visually separate transactions by date headers (e.g., "March 29, 2026").
+
+Search & Filter: A search bar to filter transactions by "Particular" names.
+
+4. Technical Stack:
+
+Frontend: Next.js (App Router), Tailwind CSS, Lucide React icons.
+
+Backend: Node.js.
+
+PDF Library: jspdf or react-pdf.
+
+Instructions for Replit Agent:
+"Please start by building the dashboard layout with the sidebar for switching cashbooks. Once the UI structure is ready, implement the 'Cash In/Out' modal and the database logic for storing transactions. Ensure the mobile view is perfectly optimized as I will use this on my phone frequently."
+
+Pro-Tips for your Replit Build:
+Dark Mode: Ask the agent to include a "Dark Mode" toggle. Modern accounting apps look very premium in dark mode with neon-accented green and red numbers.
+
+Searchability: Since your screenshots show many entries like "5 swarna" or "Amratkalash 4 bag," make sure to tell the agent: "The search bar should be very fast so I can find specific product entries instantly."
+
+Confirmation: Unlike your current app's "Save" button, ask the agent for a "Haptic-like feedback" or a brief loading toast so you know the entry was recorded.

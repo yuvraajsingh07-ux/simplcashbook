@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Cashbook Manager"
+version = "1.0.0"
+id = "artifacts/cashbook"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19078
+
+[services.development]
+run = "pnpm --filter @workspace/cashbook run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/cashbook", "run", "build" ]
+publicDir = "artifacts/cashbook/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19078"
+BASE_PATH = "/"

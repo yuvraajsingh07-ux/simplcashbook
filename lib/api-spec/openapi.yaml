@@ -1,15 +1,18 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Cashbook Manager API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: cashbooks
+    description: Cashbook management
+  - name: transactions
+    description: Transaction management
 paths:
   /healthz:
     get:
@@ -24,6 +27,163 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /cashbooks:
+    get:
+      operationId: listCashbooks
+      tags: [cashbooks]
+      summary: List all cashbooks
+      responses:
+        "200":
+          description: List of cashbooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Cashbook"
+    post:
+      operationId: createCashbook
+      tags: [cashbooks]
+      summary: Create a new cashbook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCashbookRequest"
+      responses:
+        "201":
+          description: Cashbook created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cashbook"
+
+  /cashbooks/{cashbookId}:
+    get:
+      operationId: getCashbook
+      tags: [cashbooks]
+      summary: Get a cashbook by ID
+      parameters:
+        - name: cashbookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cashbook details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cashbook"
+        "404":
+          description: Not found
+    put:
+      operationId: updateCashbook
+      tags: [cashbooks]
+      summary: Update a cashbook
+      parameters:
+        - name: cashbookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCashbookRequest"
+      responses:
+        "200":
+          description: Updated cashbook
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cashbook"
+    delete:
+      operationId: deleteCashbook
+      tags: [cashbooks]
+      summary: Delete a cashbook
+      parameters:
+        - name: cashbookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /cashbooks/{cashbookId}/transactions:
+    get:
+      operationId: listTransactions
+      tags: [transactions]
+      summary: List transactions for a cashbook
+      parameters:
+        - name: cashbookId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of transactions with running balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionListResponse"
+    post:
+      operationId: createTransaction
+      tags: [transactions]
+      summary: Create a transaction
+      parameters:
+        - name: cashbookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransactionRequest"
+      responses:
+        "201":
+          description: Transaction created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /cashbooks/{cashbookId}/transactions/{transactionId}:
+    delete:
+      operationId: deleteTransaction
+      tags: [transactions]
+      summary: Delete a transaction
+      parameters:
+        - name: cashbookId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +194,144 @@ components:
       required:
         - status
 
+    Cashbook:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        totalBalance:
+          type: number
+          description: Current net balance (cashIn - cashOut)
+        totalCashIn:
+          type: number
+        totalCashOut:
+          type: number
+      required:
+        - id
+        - name
+        - createdAt
+        - updatedAt
+        - totalBalance
+        - totalCashIn
+        - totalCashOut
+
+    CreateCashbookRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+      required:
+        - name
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        cashbookId:
+          type: integer
+        type:
+          type: string
+          enum: [cash_in, cash_out]
+        amount:
+          type: number
+        particular:
+          type: string
+        date:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - cashbookId
+        - type
+        - amount
+        - particular
+        - date
+        - createdAt
+
+    TransactionListResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransactionWithBalance"
+        totalBalance:
+          type: number
+        totalCashIn:
+          type: number
+        totalCashOut:
+          type: number
+      required:
+        - transactions
+        - totalBalance
+        - totalCashIn
+        - totalCashOut
+
+    TransactionWithBalance:
+      type: object
+      properties:
+        id:
+          type: integer
+        cashbookId:
+          type: integer
+        type:
+          type: string
+          enum: [cash_in, cash_out]
+        amount:
+          type: number
+        particular:
+          type: string
+        date:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+        runningBalance:
+          type: number
+      required:
+        - id
+        - cashbookId
+        - type
+        - amount
+        - particular
+        - date
+        - createdAt
+        - runningBalance
+
+    CreateTransactionRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [cash_in, cash_out]
+        amount:
+          type: number
+        particular:
+          type: string
+        date:
+          type: string
+          format: date
+      required:
+        - type
+        - amount
+        - particular
+        - date

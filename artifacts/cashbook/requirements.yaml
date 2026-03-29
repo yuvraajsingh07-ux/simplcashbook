@@ -1,0 +1,21 @@
+packages:
+  "jspdf": "Generate professional PDF reports of the ledger"
+  "jspdf-autotable": "Generate tables within the PDF reports"
+  "date-fns": "Format and manipulate dates for the ledger views"
+  "react-hook-form": "Robust form state management"
+  "@hookform/resolvers": "Zod integration for form validation"
+  "zod": "Schema validation for forms"
+  "framer-motion": "Micro-interactions and smooth page transitions"
+
+images:
+  - path: "artifacts/cashbook/public/images/auth-bg.png"
+    description: "Abstract gradient mesh background in deep indigo and emerald with soft light leaks, suitable for a dark mode premium finance app"
+    aspect_ratio: "16:9"
+  - path: "artifacts/cashbook/public/images/empty-state.png"
+    description: "Minimalist geometric illustration of a safe vault and coins, premium dark mode aesthetic"
+    aspect_ratio: "1:1"
+
+notes:
+  - We use standard HTML input type="date" for maximum mobile reliability rather than a complex calendar popup
+  - TanStack query hooks imported from @workspace/api-client-react
+  - wouter used for routing
