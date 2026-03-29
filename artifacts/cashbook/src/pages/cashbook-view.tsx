@@ -19,8 +19,6 @@ import {
   FileDown,
   Plus,
   Trash2,
-  TrendingUp,
-  TrendingDown,
   MoreHorizontal,
   BarChart3,
   X,
@@ -305,40 +303,20 @@ export default function CashbookView() {
                   {cashbook.description || "Manage your daily cash transactions."}
                 </p>
 
-                <div className="mt-6 flex flex-col sm:flex-row gap-4 sm:gap-8">
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                      Net Balance
-                    </p>
-                    <p
-                      className={cn(
-                        "text-3xl lg:text-4xl font-bold tracking-tight",
-                        cashbook.totalBalance >= 0
-                          ? "text-emerald-600 dark:text-emerald-500"
-                          : "text-rose-600 dark:text-rose-500"
-                      )}
-                    >
-                      {formatCurrency(cashbook.totalBalance)}
-                    </p>
-                  </div>
-                  <div className="flex gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 sm:border-l border-border/50 sm:pl-8">
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 flex items-center">
-                        <TrendingUp className="w-3 h-3 mr-1 text-emerald-500" /> Total In
-                      </p>
-                      <p className="text-lg font-semibold text-foreground">
-                        {formatCurrency(cashbook.totalCashIn)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 flex items-center">
-                        <TrendingDown className="w-3 h-3 mr-1 text-rose-500" /> Total Out
-                      </p>
-                      <p className="text-lg font-semibold text-foreground">
-                        {formatCurrency(cashbook.totalCashOut)}
-                      </p>
-                    </div>
-                  </div>
+                <div className="mt-6">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Net Balance
+                  </p>
+                  <p
+                    className={cn(
+                      "text-3xl lg:text-4xl font-bold tracking-tight",
+                      cashbook.totalBalance >= 0
+                        ? "text-emerald-600 dark:text-emerald-500"
+                        : "text-rose-600 dark:text-rose-500"
+                    )}
+                  >
+                    {formatCurrency(cashbook.totalBalance)}
+                  </p>
                 </div>
               </div>
 
