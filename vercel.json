@@ -4,11 +4,6 @@
   "outputDirectory": "artifacts/cashbook/dist",
   "installCommand": "pnpm install",
   "framework": null,
-  "functions": {
-    "artifacts/cashbook/api/**/*.ts": {
-      "runtime": "@vercel/node"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
