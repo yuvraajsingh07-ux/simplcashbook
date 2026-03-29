@@ -20,10 +20,12 @@ import type {
   Cashbook,
   CreateCashbookRequest,
   CreateTransactionRequest,
+  CreateTransferRequest,
   HealthStatus,
   ListTransactionsParams,
   Transaction,
   TransactionListResponse,
+  TransferResponse,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -823,4 +825,91 @@ export const useDeleteTransaction = <
   TContext
 > => {
   return useMutation(getDeleteTransactionMutationOptions(options));
+};
+
+/**
+ * Creates a cash_out in the source cashbook and a cash_in in the destination cashbook atomically
+ * @summary Transfer between cashbooks
+ */
+export const getCreateTransferUrl = () => {
+  return `/api/transfers`;
+};
+
+export const createTransfer = async (
+  createTransferRequest: CreateTransferRequest,
+  options?: RequestInit,
+): Promise<TransferResponse> => {
+  return customFetch<TransferResponse>(getCreateTransferUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createTransferRequest),
+  });
+};
+
+export const getCreateTransferMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTransfer>>,
+    TError,
+    { data: BodyType<CreateTransferRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createTransfer>>,
+  TError,
+  { data: BodyType<CreateTransferRequest> },
+  TContext
+> => {
+  const mutationKey = ["createTransfer"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createTransfer>>,
+    { data: BodyType<CreateTransferRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createTransfer(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateTransferMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createTransfer>>
+>;
+export type CreateTransferMutationBody = BodyType<CreateTransferRequest>;
+export type CreateTransferMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Transfer between cashbooks
+ */
+export const useCreateTransfer = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTransfer>>,
+    TError,
+    { data: BodyType<CreateTransferRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createTransfer>>,
+  TError,
+  { data: BodyType<CreateTransferRequest> },
+  TContext
+> => {
+  return useMutation(getCreateTransferMutationOptions(options));
 };

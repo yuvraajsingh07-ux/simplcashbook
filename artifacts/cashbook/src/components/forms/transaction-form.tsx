@@ -4,116 +4,116 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useCreateTransaction, getListTransactionsQueryKey, getGetCashbookQueryKey } from "@workspace/api-client-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  useCreateTransaction,
+  useCreateTransfer,
+  useListCashbooks,
+  getListTransactionsQueryKey,
+  getGetCashbookQueryKey,
+  getListCashbooksQueryKey,
+} from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowRightLeft } from "lucide-react";
 
-const schema = z.object({
+const txSchema = z.object({
   type: z.enum(["cash_in", "cash_out"]),
   amount: z.coerce.number().positive("Amount must be greater than 0"),
   particular: z.string().min(1, "Particulars/remarks required"),
   date: z.string().min(1, "Date is required"),
 });
 
-type FormData = z.infer<typeof schema>;
+const transferSchema = z.object({
+  fromCashbookId: z.string().min(1, "Select source ledger"),
+  toCashbookId: z.string().min(1, "Select destination ledger"),
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  particular: z.string().min(1, "Particulars/remarks required"),
+  date: z.string().min(1, "Date is required"),
+}).refine((d) => d.fromCashbookId !== d.toCashbookId, {
+  message: "Source and destination must be different",
+  path: ["toCashbookId"],
+});
 
-export function TransactionForm({ 
-  cashbookId, 
-  defaultType = "cash_in",
-  onSuccess 
-}: { 
+type TxFormData = z.infer<typeof txSchema>;
+type TransferFormData = z.infer<typeof transferSchema>;
+
+const today = new Date().toISOString().split("T")[0];
+
+function CashEntryForm({
+  cashbookId,
+  type,
+  onSuccess,
+}: {
   cashbookId: number;
-  defaultType?: "cash_in" | "cash_out";
+  type: "cash_in" | "cash_out";
   onSuccess: () => void;
 }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  const today = new Date().toISOString().split('T')[0];
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      type: defaultType,
-      date: today,
-    }
+  const { register, handleSubmit, formState: { errors } } = useForm<TxFormData>({
+    resolver: zodResolver(txSchema),
+    defaultValues: { type, date: today },
   });
-
-  const selectedType = watch("type");
 
   const createMutation = useCreateTransaction({
     mutation: {
       onSuccess: () => {
-        // Invalidate list of transactions and the specific cashbook to update total balance
         queryClient.invalidateQueries({ queryKey: getListTransactionsQueryKey(cashbookId) });
         queryClient.invalidateQueries({ queryKey: getGetCashbookQueryKey(cashbookId) });
-        toast({ title: "Transaction Saved", description: "Successfully recorded entry." });
+        queryClient.invalidateQueries({ queryKey: getListCashbooksQueryKey() });
+        toast({ title: type === "cash_in" ? "Cash In Saved" : "Cash Out Saved", description: "Entry recorded successfully." });
         onSuccess();
       },
-      onError: (error: any) => {
-        toast({ title: "Error", description: error.message || "Failed to save transaction", variant: "destructive" });
-      }
-    }
+      onError: () => {
+        toast({ title: "Error", description: "Failed to save entry. Please try again.", variant: "destructive" });
+      },
+    },
   });
 
-  const onSubmit = (data: FormData) => {
-    createMutation.mutate({ cashbookId, data });
+  const onSubmit = (data: TxFormData) => {
+    createMutation.mutate({ cashbookId, data: { ...data, type } });
   };
 
+  const isCashIn = type === "cash_in";
+  const colorClass = isCashIn
+    ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+    : "border-rose-500 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400";
+  const btnClass = isCashIn
+    ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30 hover:shadow-emerald-500/40"
+    : "bg-rose-500 hover:bg-rose-600 shadow-rose-500/30 hover:shadow-rose-500/40";
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-      
-      <div className="space-y-3">
-        <Label>Entry Type</Label>
-        <RadioGroup 
-          defaultValue={defaultType} 
-          onValueChange={(v) => setValue("type", v as any)}
-          className="grid grid-cols-2 gap-4"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="cash_in" id="in" className="peer sr-only" />
-            <Label
-              htmlFor="in"
-              className="flex flex-1 items-center justify-center rounded-xl border-2 border-muted bg-transparent p-4 hover:bg-emerald-50 hover:text-emerald-600 peer-data-[state=checked]:border-emerald-500 peer-data-[state=checked]:bg-emerald-50 peer-data-[state=checked]:text-emerald-600 dark:hover:bg-emerald-900/20 dark:peer-data-[state=checked]:bg-emerald-900/30 dark:peer-data-[state=checked]:text-emerald-400 cursor-pointer font-semibold transition-all"
-            >
-              Cash In (+)
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="cash_out" id="out" className="peer sr-only" />
-            <Label
-              htmlFor="out"
-              className="flex flex-1 items-center justify-center rounded-xl border-2 border-muted bg-transparent p-4 hover:bg-rose-50 hover:text-rose-600 peer-data-[state=checked]:border-rose-500 peer-data-[state=checked]:bg-rose-50 peer-data-[state=checked]:text-rose-600 dark:hover:bg-rose-900/20 dark:peer-data-[state=checked]:bg-rose-900/30 dark:peer-data-[state=checked]:text-rose-400 cursor-pointer font-semibold transition-all"
-            >
-              Cash Out (-)
-            </Label>
-          </div>
-        </RadioGroup>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-2">
+      <input type="hidden" {...register("type")} value={type} />
+
+      <div className={`rounded-xl border-2 px-4 py-2.5 text-sm font-semibold ${colorClass}`}>
+        {isCashIn ? "+ Cash In (Credit)" : "- Cash Out (Debit)"}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="date">Date</Label>
-        <Input 
-          id="date" 
-          type="date" 
-          {...register("date")} 
+        <Label htmlFor={`date-${type}`}>Date</Label>
+        <Input
+          id={`date-${type}`}
+          type="date"
+          {...register("date")}
           className="h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-background"
         />
         {errors.date && <p className="text-sm text-destructive">{errors.date.message}</p>}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="amount">Amount</Label>
+        <Label htmlFor={`amount-${type}`}>Amount</Label>
         <div className="relative">
           <span className="absolute left-4 top-3 text-muted-foreground font-medium">₹</span>
-          <Input 
-            id="amount" 
-            type="number" 
-            step="0.01" 
-            placeholder="0.00" 
-            {...register("amount")} 
+          <Input
+            id={`amount-${type}`}
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            {...register("amount")}
             className="pl-9 h-12 rounded-xl text-lg font-semibold bg-muted/50 border-transparent focus:border-primary focus:bg-background"
           />
         </div>
@@ -121,30 +121,216 @@ export function TransactionForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="particular">Particulars / Remarks</Label>
-        <Input 
-          id="particular" 
-          placeholder="e.g. Received from client..." 
-          {...register("particular")} 
+        <Label htmlFor={`particular-${type}`}>Particulars / Remarks</Label>
+        <Input
+          id={`particular-${type}`}
+          placeholder={isCashIn ? "e.g. Received from client..." : "e.g. Paid to supplier..."}
+          {...register("particular")}
           className="h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-background"
         />
         {errors.particular && <p className="text-sm text-destructive">{errors.particular.message}</p>}
       </div>
 
-      <div className="pt-4 flex justify-end">
-        <Button 
-          type="submit" 
+      <div className="pt-2">
+        <Button
+          type="submit"
           disabled={createMutation.isPending}
-          className={`w-full h-12 text-lg font-semibold rounded-xl text-white shadow-lg transition-all ${
-            selectedType === 'cash_in' 
-              ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/25 hover:shadow-emerald-500/40' 
-              : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/25 hover:shadow-rose-500/40'
-          }`}
+          className={`w-full h-12 text-base font-semibold rounded-xl text-white shadow-lg transition-all ${btnClass}`}
         >
           {createMutation.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-          Save {selectedType === 'cash_in' ? 'Cash In' : 'Cash Out'}
+          Save {isCashIn ? "Cash In" : "Cash Out"}
         </Button>
       </div>
     </form>
+  );
+}
+
+function TransferForm({
+  currentCashbookId,
+  onSuccess,
+}: {
+  currentCashbookId: number;
+  onSuccess: () => void;
+}) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data: cashbooks = [] } = useListCashbooks();
+
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<TransferFormData>({
+    resolver: zodResolver(transferSchema),
+    defaultValues: {
+      fromCashbookId: String(currentCashbookId),
+      date: today,
+    },
+  });
+
+  const fromId = watch("fromCashbookId");
+  const toId = watch("toCashbookId");
+
+  const transferMutation = useCreateTransfer({
+    mutation: {
+      onSuccess: (data) => {
+        const srcId = data.sourceTransaction.cashbookId;
+        const dstId = data.destinationTransaction.cashbookId;
+        queryClient.invalidateQueries({ queryKey: getListTransactionsQueryKey(srcId) });
+        queryClient.invalidateQueries({ queryKey: getGetCashbookQueryKey(srcId) });
+        queryClient.invalidateQueries({ queryKey: getListTransactionsQueryKey(dstId) });
+        queryClient.invalidateQueries({ queryKey: getGetCashbookQueryKey(dstId) });
+        queryClient.invalidateQueries({ queryKey: getListCashbooksQueryKey() });
+        toast({ title: "Transfer Complete", description: "Two linked entries created successfully." });
+        onSuccess();
+      },
+      onError: () => {
+        toast({ title: "Error", description: "Failed to complete transfer. Please try again.", variant: "destructive" });
+      },
+    },
+  });
+
+  const onSubmit = (data: TransferFormData) => {
+    transferMutation.mutate({
+      data: {
+        fromCashbookId: parseInt(data.fromCashbookId),
+        toCashbookId: parseInt(data.toCashbookId),
+        amount: data.amount,
+        particular: data.particular,
+        date: data.date,
+      },
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-2">
+      <div className="rounded-xl border-2 border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-4 py-2.5 text-sm font-semibold text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
+        <ArrowRightLeft className="h-4 w-4" />
+        Debit source · Credit destination
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>From (Source)</Label>
+          <Select
+            value={fromId}
+            onValueChange={(v) => setValue("fromCashbookId", v, { shouldValidate: true })}
+          >
+            <SelectTrigger className="h-12 rounded-xl bg-muted/50 border-transparent">
+              <SelectValue placeholder="Select ledger" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              {cashbooks.map((cb) => (
+                <SelectItem key={cb.id} value={String(cb.id)} disabled={String(cb.id) === toId}>
+                  {cb.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.fromCashbookId && <p className="text-sm text-destructive">{errors.fromCashbookId.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label>To (Destination)</Label>
+          <Select
+            value={toId}
+            onValueChange={(v) => setValue("toCashbookId", v, { shouldValidate: true })}
+          >
+            <SelectTrigger className="h-12 rounded-xl bg-muted/50 border-transparent">
+              <SelectValue placeholder="Select ledger" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              {cashbooks.map((cb) => (
+                <SelectItem key={cb.id} value={String(cb.id)} disabled={String(cb.id) === fromId}>
+                  {cb.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.toCashbookId && <p className="text-sm text-destructive">{errors.toCashbookId.message}</p>}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="transfer-date">Date</Label>
+        <Input
+          id="transfer-date"
+          type="date"
+          {...register("date")}
+          className="h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-background"
+        />
+        {errors.date && <p className="text-sm text-destructive">{errors.date.message}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="transfer-amount">Amount</Label>
+        <div className="relative">
+          <span className="absolute left-4 top-3 text-muted-foreground font-medium">₹</span>
+          <Input
+            id="transfer-amount"
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            {...register("amount")}
+            className="pl-9 h-12 rounded-xl text-lg font-semibold bg-muted/50 border-transparent focus:border-primary focus:bg-background"
+          />
+        </div>
+        {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="transfer-particular">Particulars / Remarks</Label>
+        <Input
+          id="transfer-particular"
+          placeholder="e.g. Monthly settlement..."
+          {...register("particular")}
+          className="h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-background"
+        />
+        {errors.particular && <p className="text-sm text-destructive">{errors.particular.message}</p>}
+      </div>
+
+      <div className="pt-2">
+        <Button
+          type="submit"
+          disabled={transferMutation.isPending}
+          className="w-full h-12 text-base font-semibold rounded-xl text-white bg-indigo-500 hover:bg-indigo-600 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 transition-all"
+        >
+          {transferMutation.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+          Save Transfer
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+export function TransactionForm({
+  cashbookId,
+  defaultTab = "cash_in",
+  onSuccess,
+}: {
+  cashbookId: number;
+  defaultTab?: "cash_in" | "cash_out" | "transfer";
+  onSuccess: () => void;
+}) {
+  return (
+    <Tabs defaultValue={defaultTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-3 rounded-xl h-11 bg-muted/70 p-1">
+        <TabsTrigger value="cash_in" className="rounded-lg text-sm font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm">
+          Cash In
+        </TabsTrigger>
+        <TabsTrigger value="cash_out" className="rounded-lg text-sm font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-rose-600 data-[state=active]:shadow-sm">
+          Cash Out
+        </TabsTrigger>
+        <TabsTrigger value="transfer" className="rounded-lg text-sm font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm">
+          Transfer
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="cash_in">
+        <CashEntryForm cashbookId={cashbookId} type="cash_in" onSuccess={onSuccess} />
+      </TabsContent>
+      <TabsContent value="cash_out">
+        <CashEntryForm cashbookId={cashbookId} type="cash_out" onSuccess={onSuccess} />
+      </TabsContent>
+      <TabsContent value="transfer">
+        <TransferForm currentCashbookId={cashbookId} onSuccess={onSuccess} />
+      </TabsContent>
+    </Tabs>
   );
 }

@@ -136,3 +136,15 @@ export const DeleteTransactionParams = zod.object({
   cashbookId: zod.coerce.number(),
   transactionId: zod.coerce.number(),
 });
+
+/**
+ * Creates a cash_out in the source cashbook and a cash_in in the destination cashbook atomically
+ * @summary Transfer between cashbooks
+ */
+export const CreateTransferBody = zod.object({
+  fromCashbookId: zod.number(),
+  toCashbookId: zod.number(),
+  amount: zod.number(),
+  particular: zod.string(),
+  date: zod.coerce.date(),
+});

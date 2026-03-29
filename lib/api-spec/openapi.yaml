@@ -184,6 +184,26 @@ paths:
         "204":
           description: Deleted
 
+  /transfers:
+    post:
+      operationId: createTransfer
+      tags: [transactions]
+      summary: Transfer between cashbooks
+      description: Creates a cash_out in the source cashbook and a cash_in in the destination cashbook atomically
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransferRequest"
+      responses:
+        "201":
+          description: Transfer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -335,3 +355,35 @@ components:
         - amount
         - particular
         - date
+
+    CreateTransferRequest:
+      type: object
+      properties:
+        fromCashbookId:
+          type: integer
+        toCashbookId:
+          type: integer
+        amount:
+          type: number
+        particular:
+          type: string
+        date:
+          type: string
+          format: date
+      required:
+        - fromCashbookId
+        - toCashbookId
+        - amount
+        - particular
+        - date
+
+    TransferResponse:
+      type: object
+      properties:
+        sourceTransaction:
+          $ref: "#/components/schemas/Transaction"
+        destinationTransaction:
+          $ref: "#/components/schemas/Transaction"
+      required:
+        - sourceTransaction
+        - destinationTransaction

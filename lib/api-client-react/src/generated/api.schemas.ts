@@ -85,6 +85,19 @@ export interface CreateTransactionRequest {
   date: string;
 }
 
+export interface CreateTransferRequest {
+  fromCashbookId: number;
+  toCashbookId: number;
+  amount: number;
+  particular: string;
+  date: string;
+}
+
+export interface TransferResponse {
+  sourceTransaction: Transaction;
+  destinationTransaction: Transaction;
+}
+
 export type ListTransactionsParams = {
   search?: string;
 };

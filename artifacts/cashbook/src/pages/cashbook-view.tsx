@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { exportLedgerToPDF } from "@/lib/pdf-export";
-import { Search, FileDown, Plus, Minus, Trash2, TrendingUp, TrendingDown, MoreHorizontal } from "lucide-react";
+import { Search, FileDown, Plus, Trash2, TrendingUp, TrendingDown, MoreHorizontal } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TransactionForm } from "@/components/forms/transaction-form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -26,7 +26,7 @@ export default function CashbookView() {
   
   const [search, setSearch] = useState("");
   const [isTxOpen, setIsTxOpen] = useState(false);
-  const [txType, setTxType] = useState<"cash_in" | "cash_out">("cash_in");
+  const [defaultTab, setDefaultTab] = useState<"cash_in" | "cash_out" | "transfer">("cash_in");
 
   const { data: cashbook, isLoading: isLoadingCb } = useGetCashbook(cashbookId);
   const { data: txResponse, isLoading: isLoadingTx } = useListTransactions(cashbookId, { search: search || undefined });
@@ -215,34 +215,27 @@ export default function CashbookView() {
           )}
         </div>
 
-        {/* Floating Action Buttons */}
-        <div className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 flex flex-col gap-4 z-50">
-          <Button 
-            onClick={() => { setTxType("cash_in"); setIsTxOpen(true); }}
-            className="w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 hover:-translate-y-1 transition-all p-0 flex items-center justify-center"
-            title="Cash In"
+        {/* Floating Action Button — single "Add Entry" */}
+        <div className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-50">
+          <Button
+            onClick={() => { setDefaultTab("cash_in"); setIsTxOpen(true); }}
+            className="h-14 px-6 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-1 transition-all flex items-center gap-2 font-semibold text-base"
           >
-            <Plus className="w-6 h-6" />
-          </Button>
-          <Button 
-            onClick={() => { setTxType("cash_out"); setIsTxOpen(true); }}
-            className="w-14 h-14 rounded-full bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/30 hover:shadow-xl hover:shadow-rose-500/40 hover:-translate-y-1 transition-all p-0 flex items-center justify-center"
-            title="Cash Out"
-          >
-            <Minus className="w-6 h-6" />
+            <Plus className="w-5 h-5" />
+            Add Entry
           </Button>
         </div>
 
         {/* Transaction Dialog */}
         <Dialog open={isTxOpen} onOpenChange={setIsTxOpen}>
           <DialogContent className="sm:max-w-md rounded-3xl p-6">
-            <DialogHeader className="mb-4">
+            <DialogHeader className="mb-2">
               <DialogTitle className="text-2xl font-display">New Entry</DialogTitle>
             </DialogHeader>
-            <TransactionForm 
-              cashbookId={cashbookId} 
-              defaultType={txType} 
-              onSuccess={() => setIsTxOpen(false)} 
+            <TransactionForm
+              cashbookId={cashbookId}
+              defaultTab={defaultTab}
+              onSuccess={() => setIsTxOpen(false)}
             />
           </DialogContent>
         </Dialog>
