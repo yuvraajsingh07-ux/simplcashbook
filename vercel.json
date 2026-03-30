@@ -2,7 +2,7 @@
   "version": 2,
   "buildCommand": "cd artifacts/cashbook && pnpm install && pnpm run build",
   "outputDirectory": "artifacts/cashbook/dist",
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": null,
   "rewrites": [
     {
