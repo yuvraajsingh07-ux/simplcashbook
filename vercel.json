@@ -6,12 +6,9 @@
   "framework": null,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/artifacts/cashbook/api/$1"
-    },
-    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
 }
+
